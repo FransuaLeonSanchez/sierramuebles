@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, send_from_directory
 import os
 import unidecode
 import re
@@ -51,6 +51,49 @@ def get_bbox(img):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+
+@app.route('/ar')
+def ar():
+    return render_template('ar.html')
+
+
+@app.route('/get_folders')
+def get_folders():
+    """Obtiene la lista de carpetas en el directorio de imágenes procesadas"""
+    processed_dir = app.config['PROCESSED_IMAGES_FOLDER']
+    try:
+        folders = [f for f in os.listdir(processed_dir)
+                   if os.path.isdir(os.path.join(processed_dir, f))]
+        return jsonify({'folders': folders})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/get_folder_images/<folder>')
+def get_folder_images(folder):
+    processed_dir = os.path.join(app.config['PROCESSED_IMAGES_FOLDER'], folder)
+    try:
+        if os.path.exists(processed_dir):
+            images = [f for f in os.listdir(processed_dir)
+                      if f.endswith(('.png', '.jpg', '.jpeg'))]
+            image_paths = []
+            for img in images:
+                image_url = f'/serve_image/{folder}/{img}'
+                image_paths.append(image_url)
+            return jsonify({'images': image_paths})
+        return jsonify({'images': []})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/serve_image/<folder>/<filename>')
+def serve_image(folder, filename):
+    """Sirve las imágenes desde el directorio de imágenes procesadas"""
+    return send_from_directory(
+        os.path.join(app.config['PROCESSED_IMAGES_FOLDER'], folder),
+        filename
+    )
 
 
 @app.route('/upload', methods=['POST'])

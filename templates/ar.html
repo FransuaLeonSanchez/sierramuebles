@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realidad Aumentada - Sierra Muebles</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ar_styles.css') }}">
+    <link rel="icon" href="/static/images/logo.jpg">
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Logo" class="logo">
+        <h1>Plataforma Realidad Aumentada Sierra Muebles</h1>
+    </header>
+    <div class="container">
+        <nav>
+            <ul>
+                <li><a href="/">Cargar Imagen</a></li>
+                <li><a href="/ar" class="active">Realidad Aumentada</a></li>
+            </ul>
+        </nav>
+        <main>
+            <div class="ar-container">
+                <div class="ar-layout">
+                    <div class="ar-main-content">
+                        <div class="background-upload-section">
+                            <h2>Cargar imagen de fondo</h2>
+                            <div class="background-preview" id="backgroundPreview">
+                                <div class="upload-prompt" id="uploadPrompt">
+                                    <p>Haga clic para seleccionar o arrastre una imagen de fondo</p>
+                                    <input type="file" id="backgroundInput" accept="image/*" style="display: none;">
+                                </div>
+                                <img id="backgroundImage" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="side-panel">
+                        <h3>Objetos Disponibles</h3>
+                        <ul class="folders-list" id="foldersList">
+                            <!-- Las carpetas se cargarán aquí dinámicamente -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/ar_script.js') }}"></script>
+</body>
+</html>
