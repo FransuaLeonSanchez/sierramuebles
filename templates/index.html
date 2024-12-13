@@ -3,156 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Procesador de Imágenes</title>
+    <title>Plataforma Realidad Aumentada Sierra Muebles</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link rel="icon" href="{{ url_for('static', filename='images/logo.png') }}">
+    <link rel="icon" href="/static/images/logo.jpg">
 </head>
 <body>
+    <header>
+        <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Logo" class="logo">
+        <h1>Plataforma Realidad Aumentada Sierra Muebles</h1>
+    </header>
     <div class="container">
-        <h1>Procesador de Imágenes</h1>
+        <nav>
+            <ul>
+                <li><a href="#" class="active">Cargar Imagen</a></li>
+                <li><a href="#">Realidad Aumentada</a></li>
+            </ul>
+        </nav>
+        <main>
+            <div class="input-group">
+                <label for="baseName">Nombre base para las imágenes:</label>
+                <input type="text" id="baseName" placeholder="Ej: mueble_salon" required>
+            </div>
 
-        <div class="input-group">
-            <label for="baseName">Nombre base para las imágenes:</label>
-            <input type="text" id="baseName" placeholder="Ej: mueble_salon" required>
-        </div>
+            <div class="drop-zone" id="dropZone">
+                <p>Arrastra las imágenes aquí o haz clic para seleccionar</p>
+                <input type="file" id="fileInput" multiple accept="image/*">
+            </div>
 
-        <div class="drop-zone" id="dropZone">
-            <p>Arrastra las imágenes aquí o haz clic para seleccionar</p>
-            <input type="file" id="fileInput" multiple accept="image/*">
-        </div>
+            <div id="preview"></div>
 
-        <div id="preview"></div>
+            <button class="btn" id="uploadBtn" disabled>Procesar Imágenes</button>
 
-        <button class="btn" id="uploadBtn" disabled>Procesar Imágenes</button>
-
-        <div id="status"></div>
+            <div id="status"></div>
+        </main>
     </div>
 
-    <script>
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        const preview = document.getElementById('preview');
-        const uploadBtn = document.getElementById('uploadBtn');
-        const status = document.getElementById('status');
-        const baseName = document.getElementById('baseName');
-        let files = [];
-
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
-
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('dragover');
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            handleFiles(e.dataTransfer.files);
-        });
-
-        dropZone.addEventListener('click', () => {
-            fileInput.click();
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            handleFiles(e.target.files);
-        });
-
-        baseName.addEventListener('input', validateForm);
-
-        function handleFiles(newFiles) {
-            const imageFiles = Array.from(newFiles).filter(file => file.type.startsWith('image/'));
-            files = [...files, ...imageFiles];
-            updatePreview();
-            validateForm();
-        }
-
-        function updatePreview() {
-            preview.innerHTML = '';
-            files.forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const div = document.createElement('div');
-                    div.className = 'preview-item';
-                    div.innerHTML = `
-                        <div class="preview-container">
-                            <div class="image-controls">
-                                <button class="control-btn rotate-btn" onclick="rotateImage(this)">⟳</button>
-                                <button class="control-btn remove-btn" onclick="removeFile(${index})">×</button>
-                            </div>
-                            <div class="image-wrapper">
-                                <img src="${e.target.result}" alt="Preview" data-rotation="0">
-                            </div>
-                        </div>
-                    `;
-                    preview.appendChild(div);
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        function removeFile(index) {
-            files.splice(index, 1);
-            updatePreview();
-            validateForm();
-        }
-
-        function rotateImage(button) {
-            const previewItem = button.closest('.preview-item');
-            const img = previewItem.querySelector('img');
-
-            const currentRotation = parseInt(img.getAttribute('data-rotation') || 0);
-            const newRotation = (currentRotation + 90) % 360;
-
-            img.style.transform = `rotate(${newRotation}deg)`;
-            img.setAttribute('data-rotation', newRotation);
-        }
-
-        function validateForm() {
-            uploadBtn.disabled = files.length === 0 || !baseName.value.trim();
-        }
-
-        uploadBtn.addEventListener('click', async () => {
-            if (files.length === 0 || !baseName.value.trim()) return;
-
-            const formData = new FormData();
-            files.forEach(file => {
-                formData.append('files[]', file);
-            });
-            formData.append('baseName', baseName.value.trim());
-
-            // Agregar las rotaciones de cada imagen
-            const rotations = Array.from(preview.querySelectorAll('img')).map(img => img.getAttribute('data-rotation'));
-            rotations.forEach(rotation => {
-                formData.append('rotations[]', rotation);
-            });
-
-            uploadBtn.disabled = true;
-            status.innerHTML = 'Procesando imágenes...';
-            status.className = '';
-
-            try {
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-                status.innerHTML = data.message;
-                status.className = 'success';
-
-                files = [];
-                updatePreview();
-                validateForm();
-            } catch (error) {
-                status.innerHTML = 'Error al procesar las imágenes';
-                status.className = 'error';
-            }
-
-            uploadBtn.disabled = false;
-        });
-    </script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

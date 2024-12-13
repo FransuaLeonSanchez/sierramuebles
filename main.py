@@ -136,7 +136,7 @@ class ImageProcessor:
 
 
 def main():
-    input_dir = sys.argv[1] if len(sys.argv) > 1 else "imagenes"
+    input_dir = sys.argv[1] if len(sys.argv) > 1 else "images"
     output_dir = sys.argv[2] if len(sys.argv) > 2 else "imagenes_modificadas"
 
     processor = ImageProcessor(input_dir, output_dir)
