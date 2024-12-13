@@ -1,6 +1,5 @@
 from flask import Flask, request, render_template, jsonify
 import os
-from werkzeug.utils import secure_filename
 import unidecode
 import re
 from rembg import remove, new_session
@@ -9,26 +8,27 @@ import numpy as np
 
 app = Flask(__name__)
 
-# Configuración
-app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['OUTPUT_FOLDER'] = 'static/processed'
+# Configuración de directorios base
+app.config['IMAGES_FOLDER'] = 'imagenes'
+app.config['PROCESSED_IMAGES_FOLDER'] = 'imagenes_procesadas'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max-limit
 
-# Crear directorios si no existen
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-os.makedirs(app.config['OUTPUT_FOLDER'], exist_ok=True)
+
+def create_project_directories(project_name):
+    """Crea los directorios necesarios para el proyecto"""
+    original_dir = os.path.join(app.config['IMAGES_FOLDER'], project_name)
+    processed_dir = os.path.join(app.config['PROCESSED_IMAGES_FOLDER'], project_name)
+    os.makedirs(original_dir, exist_ok=True)
+    os.makedirs(processed_dir, exist_ok=True)
+    return original_dir, processed_dir
 
 
 def sanitize_filename(filename):
-    # Quitar tildes y caracteres especiales
     filename = unidecode.unidecode(filename)
-    # Reemplazar espacios y caracteres no permitidos con guiones bajos
-    filename = re.sub(r'[^a-zA-Z0-9._-]', '_', filename)
-    return filename
+    return re.sub(r'[^a-zA-Z0-9._-]', '_', filename)
 
 
 def get_bbox(img):
-    """Obtiene el bounding box de la imagen sin transparencia"""
     img_array = np.array(img)
     alpha = img_array[:, :, 3]
     coords = np.argwhere(alpha > 0)
@@ -40,12 +40,12 @@ def get_bbox(img):
     y1, x1 = coords.max(axis=0)
 
     padding = 10
-    x0 = max(0, x0 - padding)
-    y0 = max(0, y0 - padding)
-    x1 = min(img.width, x1 + padding)
-    y1 = min(img.height, y1 + padding)
-
-    return (x0, y0, x1, y1)
+    return (
+        max(0, x0 - padding),
+        max(0, y0 - padding),
+        min(img.width, x1 + padding),
+        min(img.height, y1 + padding)
+    )
 
 
 @app.route('/')
@@ -60,59 +60,45 @@ def upload_file():
 
     files = request.files.getlist('files[]')
     rotations = request.form.getlist('rotations[]')
-    base_name = request.form.get('baseName', 'imagen')
-    base_name = sanitize_filename(base_name)
+    base_name = sanitize_filename(request.form.get('baseName', 'imagen'))
 
+    original_dir, processed_dir = create_project_directories(base_name)
     processed_files = []
     errors = []
 
-    session = new_session(model_name="u2net", providers=['CPUExecutionProvider'])
+    session = new_session(model_name="u2net")
 
     for i, (file, rotation) in enumerate(zip(files, rotations), 1):
         if file:
             try:
                 filename = f"{base_name}_{i}.png"
-                input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                output_path = os.path.join(app.config['OUTPUT_FOLDER'], filename)
+                input_path = os.path.join(original_dir, filename)
+                output_path = os.path.join(processed_dir, filename)
 
-                # Guardar imagen
-                file.save(input_path)
-                with Image.open(input_path) as input_image:
-                    if input_image.mode != 'RGB':
-                        input_image = input_image.convert('RGB')
+                # Abrir y rotar la imagen original antes de guardarla
+                original_image = Image.open(file)
+                if int(rotation) != 0:
+                    original_image = original_image.rotate(-int(rotation), expand=True)
+                original_image.save(input_path, 'PNG', quality=100)
 
-                    # Procesar imagen
-                    output_image = remove(
-                        input_image,
-                        session=session,
-                        alpha_matting=True,
-                        alpha_matting_foreground_threshold=250,
-                        alpha_matting_background_threshold=0,
-                        alpha_matting_erode_size=0,
-                        post_process_mask=False,
-                        alpha_matting_kernel_size=3
-                    )
+                # Procesar la imagen para remover fondo
+                if original_image.mode != 'RGB':
+                    original_image = original_image.convert('RGB')
 
-                    # Recortar
-                    bbox = get_bbox(output_image)
-                    output_image = output_image.crop(bbox)
+                output_image = remove(
+                    original_image,
+                    session=session,
+                    alpha_matting=True,
+                    alpha_matting_foreground_threshold=250,
+                    alpha_matting_background_threshold=0
+                )
 
-                    # Aplicar rotación si existe
-                    rotation = int(rotation)
-                    if rotation != 0:
-                        output_image = output_image.rotate(-rotation, expand=True)
-
-                    # Guardar imagen final
-                    output_image.save(output_path, 'PNG', quality=100)
-                    processed_files.append(filename)
+                output_image = output_image.crop(get_bbox(output_image))
+                output_image.save(output_path, 'PNG', quality=100)
+                processed_files.append(filename)
 
             except Exception as e:
                 errors.append(f"Error procesando {file.filename}: {str(e)}")
-
-            finally:
-                # Limpiar archivo temporal
-                if os.path.exists(input_path):
-                    os.remove(input_path)
 
     return jsonify({
         'processed': processed_files,
@@ -122,4 +108,6 @@ def upload_file():
 
 
 if __name__ == '__main__':
+    os.makedirs(app.config['IMAGES_FOLDER'], exist_ok=True)
+    os.makedirs(app.config['PROCESSED_IMAGES_FOLDER'], exist_ok=True)
     app.run(debug=True)
