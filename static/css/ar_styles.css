@@ -20,12 +20,13 @@ header {
 
 .container {
     display: flex;
-    max-width: 1200px;
+    max-width: 1600px; /* Aumentado de 1200px */
     margin: 0 auto;
     align-items: center;
     justify-content: center;
     min-height: calc(100vh - 70px);
 }
+
 
 nav {
     width: 250px;
@@ -58,7 +59,7 @@ nav ul li a.active {
 main {
     flex-grow: 1;
     padding: 20px;
-    max-width: 800px;
+    max-width: 1200px; /* Aumentado de 800px */
 }
 
 .input-group {
@@ -222,7 +223,7 @@ input[type="text"] {
 
 .background-upload-section {
     width: 100%;
-    max-width: 800px;
+    max-width: 1200px; /* Aumentado de 800px */
     text-align: center;
 }
 
@@ -233,7 +234,7 @@ input[type="text"] {
 
 .background-preview {
     width: 100%;
-    min-height: 500px;
+    min-height: 700px; /* Aumentado de 500px */
     border: 2px dashed #ccc;
     border-radius: 8px;
     margin: 20px 0;
@@ -287,6 +288,7 @@ input[type="text"] {
     background-color: #333;
     padding: 20px;
     border-radius: 8px;
+    margin-left: 20px; /* Añadido para mejor espaciado */
 }
 
 .side-panel h3 {

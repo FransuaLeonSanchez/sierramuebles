@@ -174,44 +174,37 @@ document.addEventListener('DOMContentLoaded', function() {
             const startY = e.clientY;
             const startWidth = element.offsetWidth;
             const startHeight = element.offsetHeight;
-            const startLeft = element.offsetLeft;
-            const startTop = element.offsetTop;
+            const startLeft = parseInt(element.style.left);
+            const startTop = parseInt(element.style.top);
             const point = e.target;
 
             document.addEventListener('mousemove', resize);
             document.addEventListener('mouseup', stopResize);
 
             function resize(e) {
-                let newWidth, newHeight, newLeft = startLeft, newTop = startTop;
                 const dx = e.clientX - startX;
                 const dy = e.clientY - startY;
 
                 if (point.classList.contains('se')) {
-                    newWidth = Math.max(1, startWidth + dx);
-                    newHeight = Math.max(1, startHeight + dy);
+                    element.style.width = `${startWidth + dx}px`;
+                    element.style.height = `${startHeight + dy}px`;
                 }
                 else if (point.classList.contains('sw')) {
-                    newWidth = Math.max(1, startWidth - dx);
-                    newHeight = Math.max(1, startHeight + dy);
-                    newLeft = startLeft + (startWidth - newWidth);
+                    element.style.width = `${startWidth - dx}px`;
+                    element.style.height = `${startHeight + dy}px`;
+                    element.style.left = `${startLeft + dx}px`;
                 }
                 else if (point.classList.contains('ne')) {
-                    newWidth = Math.max(1, startWidth + dx);
-                    newHeight = Math.max(1, startHeight - dy);
-                    newTop = startTop + (startHeight - newHeight);
+                    element.style.width = `${startWidth + dx}px`;
+                    element.style.height = `${startHeight - dy}px`;
+                    element.style.top = `${startTop + dy}px`;
                 }
                 else if (point.classList.contains('nw')) {
-                    newWidth = Math.max(1, startWidth - dx);
-                    newHeight = Math.max(1, startHeight - dy);
-                    newLeft = startLeft + (startWidth - newWidth);
-                    newTop = startTop + (startHeight - newHeight);
+                    element.style.width = `${startWidth - dx}px`;
+                    element.style.height = `${startHeight - dy}px`;
+                    element.style.left = `${startLeft + dx}px`;
+                    element.style.top = `${startTop + dy}px`;
                 }
-
-                // Aplicar los cambios
-                element.style.width = `${newWidth}px`;
-                element.style.height = `${newHeight}px`;
-                element.style.left = `${newLeft}px`;
-                element.style.top = `${newTop}px`;
             }
 
             function stopResize() {
