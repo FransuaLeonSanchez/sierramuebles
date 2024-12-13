@@ -199,4 +199,4 @@ def serve_saved_model(filename):
 if __name__ == '__main__':
     os.makedirs(app.config['IMAGES_FOLDER'], exist_ok=True)
     os.makedirs(app.config['PROCESSED_IMAGES_FOLDER'], exist_ok=True)
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)

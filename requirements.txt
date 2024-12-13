@@ -3,3 +3,5 @@ unidecode
 rembg
 Pillow
 numpy
+uvicorn
+onnxruntime
