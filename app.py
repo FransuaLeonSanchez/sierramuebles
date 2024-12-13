@@ -1,10 +1,12 @@
-from flask import Flask, request, render_template, jsonify, send_from_directory
+from flask import Flask, request, render_template, jsonify, send_from_directory, url_for
 import os
 import unidecode
 import re
 from rembg import remove, new_session
 from PIL import Image
 import numpy as np
+import base64
+import time
 
 app = Flask(__name__)
 
@@ -56,6 +58,11 @@ def index():
 @app.route('/ar')
 def ar():
     return render_template('ar.html')
+
+
+@app.route('/saved-models')
+def saved_models():
+    return render_template('saved_models.html')
 
 
 @app.route('/get_folders')
@@ -149,6 +156,45 @@ def upload_file():
         'message': f'Se procesaron {len(processed_files)} imágenes exitosamente'
     })
 
+
+@app.route('/save_composition', methods=['POST'])
+def save_composition():
+    data = request.get_json()
+    image_data = data.get('image')
+
+    # Guardar la imagen en el servidor (puedes usar una base de datos o almacenarla en un directorio)
+    # Por simplicidad, este ejemplo guarda la imagen en un directorio llamado 'saved_models'
+    os.makedirs('saved_models', exist_ok=True)
+    filename = f"model_{int(time.time())}.jpg"
+    filepath = os.path.join('saved_models', filename)
+
+    image_data = image_data.split(',')[1]
+    image_data = base64.b64decode(image_data)
+
+    with open(filepath, 'wb') as f:
+        f.write(image_data)
+
+    return jsonify({'message': 'Composición guardada exitosamente'})
+
+
+@app.route('/get_saved_models')
+def get_saved_models():
+    saved_models_dir = 'saved_models'
+    models = []
+
+    if os.path.exists(saved_models_dir):
+        for filename in os.listdir(saved_models_dir):
+            if filename.endswith('.jpg'):
+                models.append({
+                    'filename': filename,
+                    'url': url_for('serve_saved_model', filename=filename)
+                })
+
+    return jsonify({'models': models})
+
+@app.route('/saved_models/<path:filename>')
+def serve_saved_model(filename):
+    return send_from_directory('saved_models', filename)
 
 if __name__ == '__main__':
     os.makedirs(app.config['IMAGES_FOLDER'], exist_ok=True)

@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const backgroundImage = document.getElementById('backgroundImage');
     const uploadPrompt = document.getElementById('uploadPrompt');
     const foldersList = document.getElementById('foldersList');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const saveBtn = document.getElementById('saveBtn');
     let selectedFolder = null;
     let objects = [];
     let backgroundImageLoaded = false;
@@ -47,6 +49,84 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Error cargando imagen:', error);
         }
+    }
+
+    async function saveComposition() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const bgRect = backgroundImage.getBoundingClientRect();
+        canvas.width = bgRect.width;
+        canvas.height = bgRect.height;
+        ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+
+        objects.forEach(obj => {
+            const objRect = obj.getBoundingClientRect();
+            const img = obj.querySelector('.draggable-image');
+            const container = obj.querySelector('.object-container');
+            const rotation = container.style.transform || 'rotate(0deg)';
+            const angle = parseInt(rotation.match(/rotate\((\d+)deg\)/) ? rotation.match(/rotate\((\d+)deg\)/)[1] : 0);
+
+            const relativeLeft = objRect.left - bgRect.left;
+            const relativeTop = objRect.top - bgRect.top;
+
+            ctx.save();
+            ctx.translate(relativeLeft + objRect.width/2, relativeTop + objRect.height/2);
+            ctx.rotate(angle * Math.PI / 180);
+
+            let imgWidth = objRect.width;
+            let imgHeight = objRect.height;
+
+            if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+                const aspectRatio = img.naturalWidth / img.naturalHeight;
+                if (imgWidth / imgHeight > aspectRatio) {
+                    imgWidth = imgHeight * aspectRatio;
+                } else {
+                    imgHeight = imgWidth / aspectRatio;
+                }
+            }
+
+            ctx.drawImage(img, -imgWidth/2, -imgHeight/2, imgWidth, imgHeight);
+            ctx.restore();
+        });
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+
+        try {
+            const response = await fetch('/save_composition', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image: dataUrl })
+            });
+
+            if (response.ok) {
+                showNotification('Composición guardada exitosamente', 'success');
+            } else {
+                showNotification('Error al guardar la composición', 'error');
+            }
+        } catch (error) {
+            console.error('Error al guardar la composición:', error);
+            showNotification('Error al guardar la composición', 'error');
+        }
+    }
+
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.classList.add('notification', type);
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 100);
+
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }, 3000);
     }
 
     function createDraggableObject(imagePath, imagesList) {
@@ -247,6 +327,126 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    function downloadComposition() {
+        // Crear un canvas temporal del tamaño de la imagen de fondo
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Obtener dimensiones de la imagen de fondo
+        const bgRect = backgroundImage.getBoundingClientRect();
+        canvas.width = bgRect.width;
+        canvas.height = bgRect.height;
+
+        // Dibujar la imagen de fondo
+        ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+
+        // Dibujar cada objeto en su posición y tamaño actuales
+        objects.forEach(obj => {
+            const objRect = obj.getBoundingClientRect();
+            const img = obj.querySelector('.draggable-image');
+            const container = obj.querySelector('.object-container');
+            const rotation = container.style.transform || 'rotate(0deg)';
+            const angle = parseInt(rotation.match(/rotate\((\d+)deg\)/) ? rotation.match(/rotate\((\d+)deg\)/)[1] : 0);
+
+            // Calcular posición relativa al canvas
+            const relativeLeft = objRect.left - bgRect.left;
+            const relativeTop = objRect.top - bgRect.top;
+
+            // Guardar el estado actual del contexto
+            ctx.save();
+
+            // Trasladar y rotar el contexto
+            ctx.translate(relativeLeft + objRect.width/2, relativeTop + objRect.height/2);
+            ctx.rotate(angle * Math.PI / 180);
+
+            // Calcular las dimensiones de la imagen manteniendo la proporción
+            let imgWidth = objRect.width;
+            let imgHeight = objRect.height;
+
+            if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+                const aspectRatio = img.naturalWidth / img.naturalHeight;
+                if (imgWidth / imgHeight > aspectRatio) {
+                    imgWidth = imgHeight * aspectRatio;
+                } else {
+                    imgHeight = imgWidth / aspectRatio;
+                }
+            }
+
+            // Dibujar la imagen con las dimensiones ajustadas
+            ctx.drawImage(img, -imgWidth/2, -imgHeight/2, imgWidth, imgHeight);
+
+            // Restaurar el estado del contexto
+            ctx.restore();
+        });
+
+        // Convertir el canvas a una URL de datos y descargar
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        const link = document.createElement('a');
+        link.download = 'composicion.jpg';
+        link.href = dataUrl;
+        link.click();
+    }
+
+    async function saveComposition() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const bgRect = backgroundImage.getBoundingClientRect();
+    canvas.width = bgRect.width;
+    canvas.height = bgRect.height;
+    ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+
+    objects.forEach(obj => {
+        const objRect = obj.getBoundingClientRect();
+        const img = obj.querySelector('.draggable-image');
+        const container = obj.querySelector('.object-container');
+        const rotation = container.style.transform || 'rotate(0deg)';
+        const angle = parseInt(rotation.match(/rotate\((\d+)deg\)/) ? rotation.match(/rotate\((\d+)deg\)/)[1] : 0);
+
+        const relativeLeft = objRect.left - bgRect.left;
+        const relativeTop = objRect.top - bgRect.top;
+
+        ctx.save();
+        ctx.translate(relativeLeft + objRect.width/2, relativeTop + objRect.height/2);
+        ctx.rotate(angle * Math.PI / 180);
+
+        let imgWidth = objRect.width;
+        let imgHeight = objRect.height;
+
+        if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+            const aspectRatio = img.naturalWidth / img.naturalHeight;
+            if (imgWidth / imgHeight > aspectRatio) {
+                imgWidth = imgHeight * aspectRatio;
+            } else {
+                imgHeight = imgWidth / aspectRatio;
+            }
+        }
+
+        ctx.drawImage(img, -imgWidth/2, -imgHeight/2, imgWidth, imgHeight);
+        ctx.restore();
+    });
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+
+    try {
+        const response = await fetch('/save_composition', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ image: dataUrl })
+        });
+
+        if (response.ok) {
+            showNotification('Composición guardada exitosamente');
+        } else {
+            showNotification('Error al guardar la composición', 'error');
+        }
+    } catch (error) {
+        console.error('Error al guardar la composición:', error);
+        showNotification('Error al guardar la composición', 'error');
+    }
+}
+
     function handleBackgroundImage(file) {
         if (backgroundImageLoaded) return;
 
@@ -306,10 +506,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     backgroundPreview.addEventListener('click', handlePreviewClick);
     backgroundPreview.addEventListener('dragover', handleDragOver);
+    saveBtn.addEventListener('click', saveComposition);
     backgroundPreview.addEventListener('dragleave', () => {
         backgroundPreview.classList.remove('dragover');
     });
     backgroundPreview.addEventListener('drop', handleDrop);
+    downloadBtn.addEventListener('click', downloadComposition);
     backgroundInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
             handleBackgroundImage(e.target.files[0]);

@@ -11,6 +11,8 @@ header {
     background-color: #333;
     color: white;
     padding: 10px;
+    height: 60px;
+    min-height: 60px;
 }
 
 .logo {
@@ -19,14 +21,15 @@ header {
 }
 
 .container {
+    flex: 1;
     display: flex;
-    max-width: 1600px; /* Aumentado de 1200px */
+    max-width: 1600px;
     margin: 0 auto;
     align-items: center;
     justify-content: center;
-    min-height: calc(100vh - 70px);
+    padding: 20px;
+    height: calc(100vh - 100px);
 }
-
 
 nav {
     width: 250px;
@@ -57,9 +60,9 @@ nav ul li a.active {
 }
 
 main {
-    flex-grow: 1;
+    flex: 1;
     padding: 20px;
-    max-width: 1200px; /* Aumentado de 800px */
+    max-width: 1200px;
 }
 
 .input-group {
@@ -202,13 +205,10 @@ input[type="text"] {
     color: #a94442;
 }
 
-/* Estilos específicos para el módulo de RA */
 .ar-container {
     width: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: 20px;
 }
 
 .ar-layout {
@@ -223,7 +223,7 @@ input[type="text"] {
 
 .background-upload-section {
     width: 100%;
-    max-width: 1200px; /* Aumentado de 800px */
+    max-width: 1200px;
     text-align: center;
 }
 
@@ -234,7 +234,7 @@ input[type="text"] {
 
 .background-preview {
     width: 100%;
-    min-height: 700px; /* Aumentado de 500px */
+    min-height: 700px;
     border: 2px dashed #ccc;
     border-radius: 8px;
     margin: 20px 0;
@@ -288,7 +288,9 @@ input[type="text"] {
     background-color: #333;
     padding: 20px;
     border-radius: 8px;
-    margin-left: 20px; /* Añadido para mejor espaciado */
+    display: flex;
+    flex-direction: column;
+    height: auto;
 }
 
 .side-panel h3 {
@@ -302,6 +304,9 @@ input[type="text"] {
     list-style: none;
     padding: 0;
     margin: 0;
+    max-height: 700px;
+    overflow-y: auto;
+    margin-bottom: 20px;
 }
 
 .folder-item {
@@ -424,4 +429,89 @@ input[type="text"] {
     display: flex;
     gap: 5px;
     z-index: 2;
+}
+
+.download-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%;
+    transition: background-color 0.3s ease;
+    margin-bottom: 10px; /* Agrega un margen inferior de 10px */
+}
+
+.download-btn:hover {
+    background-color: #45a049;
+}
+
+.save-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%;
+    transition: background-color 0.3s ease;
+    margin-top: 10px; /* Agrega un margen superior de 10px */
+}
+
+.save-btn:hover {
+    background-color: #45a049;
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px;
+    border-radius: 4px;
+    color: white;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.notification.success {
+    background-color: #4CAF50;
+}
+
+.notification.error {
+    background-color: #f44336;
+}
+
+.notification.show {
+    opacity: 1;
+}
+
+.notification {
+    position: fixed;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 30px;
+    border-radius: 4px;
+    color: white;
+    font-weight: bold;
+    opacity: 0;
+    transition: top 0.3s ease, opacity 0.3s ease;
+    z-index: 9999;
+}
+
+.notification.success {
+    background-color: #4CAF50;
+}
+
+.notification.error {
+    background-color: #f44336;
+}
+
+.notification.show {
+    top: 20px;
+    opacity: 1;
 }

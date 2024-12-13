@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelos Guardados - Sierra Muebles</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/saved_models_styles.css') }}">
+    <link rel="icon" href="/static/images/logo.jpg">
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Logo" class="logo">
+        <h1>Plataforma Realidad Aumentada Sierra Muebles</h1>
+    </header>
+    <div class="container">
+        <nav>
+            <ul>
+                <li><a href="/">Cargar Imagen</a></li>
+                <li><a href="/ar">Realidad Aumentada</a></li>
+                <li><a href="/saved-models" class="active">Modelos Guardados</a></li>
+            </ul>
+        </nav>
+        <main>
+            <h2>Modelos Guardados</h2>
+            <div id="savedModelsGrid" class="saved-models-grid">
+                <!-- Los modelos guardados se cargarán aquí dinámicamente -->
+            </div>
+        </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/saved_models_script.js') }}"></script>
+</body>
+</html>
