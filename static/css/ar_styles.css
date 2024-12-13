@@ -406,3 +406,20 @@ input[type="text"] {
 .draggable-object:hover .resize-point {
     display: block;
 }
+
+.switch-btn {
+    background-color: #4CAF50;
+    color: white;
+    transform: rotate(90deg);  /* Girar el símbolo para que quede horizontal */
+}
+
+/* Actualizar los estilos de los controles para acomodar el nuevo botón */
+.object-controls {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 5px;
+    z-index: 2;
+}

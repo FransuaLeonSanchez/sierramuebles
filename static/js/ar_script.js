@@ -42,18 +42,22 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (data.images && data.images.length > 0) {
-                createDraggableObject(data.images[0]);
+                createDraggableObject(data.images[0], data.images);
             }
         } catch (error) {
             console.error('Error cargando imagen:', error);
         }
     }
 
-    function createDraggableObject(imagePath) {
+    function createDraggableObject(imagePath, imagesList) {
         const draggableObject = document.createElement('div');
         draggableObject.className = 'draggable-object';
         draggableObject.style.width = '200px';
         draggableObject.style.height = '200px';
+
+        // Guardar la lista de imágenes y el índice actual
+        draggableObject.dataset.images = JSON.stringify(imagesList);
+        draggableObject.dataset.currentImageIndex = '0';
 
         const objectContainer = document.createElement('div');
         objectContainer.className = 'object-container';
@@ -69,6 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
         controls.className = 'object-controls';
         controls.innerHTML = `
             <button class="control-btn remove-btn">×</button>
+            <button class="control-btn switch-btn">↔</button>
             <button class="control-btn rotate-btn">⟳</button>
         `;
 
@@ -87,8 +92,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Posicionar dentro de la imagen de fondo
         const imgRect = backgroundImage.getBoundingClientRect();
-        draggableObject.style.left = `${(imgRect.width - 200) / 2}px`;
-        draggableObject.style.top = `${(imgRect.height - 200) / 2}px`;
+        const previewRect = backgroundPreview.getBoundingClientRect();
+        const imgLeft = imgRect.left - previewRect.left;
+        const imgTop = imgRect.top - previewRect.top;
+        draggableObject.style.left = `${imgLeft + (imgRect.width - 200) / 2}px`;
+        draggableObject.style.top = `${imgTop + (imgRect.height - 200) / 2}px`;
 
         backgroundPreview.appendChild(draggableObject);
         objects.push(draggableObject);
@@ -123,18 +131,23 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const imgRect = backgroundImage.getBoundingClientRect();
             const elementRect = element.getBoundingClientRect();
+            const previewRect = backgroundPreview.getBoundingClientRect();
 
             pos1 = pos3 - e.clientX;
             pos2 = pos4 - e.clientY;
             pos3 = e.clientX;
             pos4 = e.clientY;
 
+            const imgTop = imgRect.top - previewRect.top;
+            const imgBottom = imgRect.bottom - previewRect.top;
+            const imgLeft = imgRect.left - previewRect.left;
+            const imgRight = imgRect.right - previewRect.left;
+
             let newLeft = element.offsetLeft - pos1;
             let newTop = element.offsetTop - pos2;
 
-            // Limitar al área de la imagen
-            newLeft = Math.max(0, Math.min(newLeft, imgRect.width - elementRect.width));
-            newTop = Math.max(0, Math.min(newTop, imgRect.height - elementRect.height));
+            newLeft = Math.max(imgLeft, Math.min(newLeft, imgRight - elementRect.width));
+            newTop = Math.max(imgTop, Math.min(newTop, imgBottom - elementRect.height));
 
             element.style.left = newLeft + "px";
             element.style.top = newTop + "px";
@@ -164,44 +177,41 @@ document.addEventListener('DOMContentLoaded', function() {
             const startLeft = element.offsetLeft;
             const startTop = element.offsetTop;
             const point = e.target;
-            const aspectRatio = startWidth / startHeight;
 
             document.addEventListener('mousemove', resize);
             document.addEventListener('mouseup', stopResize);
 
             function resize(e) {
+                let newWidth, newHeight, newLeft = startLeft, newTop = startTop;
                 const dx = e.clientX - startX;
                 const dy = e.clientY - startY;
-                let newWidth, newHeight;
 
                 if (point.classList.contains('se')) {
-                    newWidth = startWidth + dx;
-                    newHeight = newWidth / aspectRatio;
-                } else if (point.classList.contains('sw')) {
-                    newWidth = startWidth - dx;
-                    newHeight = newWidth / aspectRatio;
-                    if (newWidth > 50 && newHeight > 50) {
-                        element.style.left = `${startLeft + dx}px`;
-                    }
-                } else if (point.classList.contains('ne')) {
-                    newWidth = startWidth + dx;
-                    newHeight = newWidth / aspectRatio;
-                    if (newWidth > 50 && newHeight > 50) {
-                        element.style.top = `${startTop - (newHeight - startHeight)}px`;
-                    }
-                } else if (point.classList.contains('nw')) {
-                    newWidth = startWidth - dx;
-                    newHeight = newWidth / aspectRatio;
-                    if (newWidth > 50 && newHeight > 50) {
-                        element.style.left = `${startLeft + dx}px`;
-                        element.style.top = `${startTop - (newHeight - startHeight)}px`;
-                    }
+                    newWidth = Math.max(1, startWidth + dx);
+                    newHeight = Math.max(1, startHeight + dy);
+                }
+                else if (point.classList.contains('sw')) {
+                    newWidth = Math.max(1, startWidth - dx);
+                    newHeight = Math.max(1, startHeight + dy);
+                    newLeft = startLeft + (startWidth - newWidth);
+                }
+                else if (point.classList.contains('ne')) {
+                    newWidth = Math.max(1, startWidth + dx);
+                    newHeight = Math.max(1, startHeight - dy);
+                    newTop = startTop + (startHeight - newHeight);
+                }
+                else if (point.classList.contains('nw')) {
+                    newWidth = Math.max(1, startWidth - dx);
+                    newHeight = Math.max(1, startHeight - dy);
+                    newLeft = startLeft + (startWidth - newWidth);
+                    newTop = startTop + (startHeight - newHeight);
                 }
 
-                if (newWidth > 50 && newHeight > 50) {
-                    element.style.width = `${newWidth}px`;
-                    element.style.height = `${newHeight}px`;
-                }
+                // Aplicar los cambios
+                element.style.width = `${newWidth}px`;
+                element.style.height = `${newHeight}px`;
+                element.style.left = `${newLeft}px`;
+                element.style.top = `${newTop}px`;
             }
 
             function stopResize() {
@@ -214,6 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function setupControls(element) {
         const removeBtn = element.querySelector('.remove-btn');
         const rotateBtn = element.querySelector('.rotate-btn');
+        const switchBtn = element.querySelector('.switch-btn');
         let rotation = 0;
 
         removeBtn.addEventListener('click', () => {
@@ -224,6 +235,22 @@ document.addEventListener('DOMContentLoaded', function() {
         rotateBtn.addEventListener('click', () => {
             rotation = (rotation + 90) % 360;
             element.querySelector('.object-container').style.transform = `rotate(${rotation}deg)`;
+        });
+
+        switchBtn.addEventListener('click', () => {
+            const images = JSON.parse(element.dataset.images);
+            let currentIndex = parseInt(element.dataset.currentImageIndex);
+            currentIndex = (currentIndex + 1) % images.length;
+            element.dataset.currentImageIndex = currentIndex.toString();
+
+            const currentWidth = element.style.width;
+            const currentHeight = element.style.height;
+
+            const img = element.querySelector('.draggable-image');
+            img.src = images[currentIndex];
+
+            element.style.width = currentWidth;
+            element.style.height = currentHeight;
         });
     }
 
@@ -252,7 +279,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 backgroundImageLoaded = true;
                 backgroundPreview.style.cursor = 'default';
 
-                // Desactivar eventos de carga
                 backgroundPreview.removeEventListener('click', handlePreviewClick);
                 backgroundPreview.removeEventListener('dragover', handleDragOver);
                 backgroundPreview.removeEventListener('drop', handleDrop);
